@@ -1,0 +1,23 @@
+Diagram: https://raw.githubusercontent.com/atanih/holbertonschool-system_engineering-devops/main/web_infrastructure_design/images/3-scale_up.png
+
+3. Scale up - www.foobar.com
+
+Flow: DNS points to the load balancer cluster. Two HAProxy instances run as a
+cluster and both receive traffic. They forward requests to the web server, which
+serves static content and passes dynamic requests to the application server, which
+queries the database server.
+
+Why each additional element:
+- 1 more server: needed so each component can live on its own machine.
+- Second load balancer (HAProxy) configured as a cluster with the first one: removes
+  the load balancer SPOF. Both nodes check each other with a heartbeat; if one fails,
+  the other keeps handling all the traffic.
+- Split components (web server, application server, database), each on its own
+  server:
+  - Web server (Nginx): handles HTTP connections and static files only.
+  - Application server: runs only the code base and business logic.
+  - Database server (MySQL): runs only the database, with all of that machine's
+    memory and disk for data.
+  Each layer gets its own resources, a failure in one does not take down the others,
+  and each layer can be scaled on its own (for example, adding more application
+  servers without touching the database).
