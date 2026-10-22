@@ -1,0 +1,48 @@
+Diagram: https://raw.githubusercontent.com/atanih/holbertonschool-system_engineering-devops/main/web_infrastructure_design/images/2-secured_and_monitored_web_infrastructure.png
+
+2. Secured and monitored web infrastructure - https://www.foobar.com
+
+Flow: the user connects over HTTPS. Firewall 1 filters traffic before the load
+balancer, which holds the SSL certificate, decrypts the request and forwards it to
+one of the two servers, each protected by its own firewall. A monitoring client on
+each machine sends logs and metrics to an external monitoring service.
+
+Why each additional element:
+- 3 firewalls: one in front of the load balancer and one in front of each server,
+  so each machine only accepts the traffic it needs.
+- 1 SSL certificate: lets www.foobar.com be served over HTTPS.
+- 3 monitoring clients: one per machine, collecting data to send to the monitoring
+  service (Sumo Logic or similar).
+
+What firewalls are for: they filter network traffic with rules (allowed IPs, ports
+and protocols). For example, only ports 80/443 open to the public and 22 only from
+the admin's IP. Everything else is blocked.
+
+Why traffic is served over HTTPS: HTTPS encrypts the traffic between the browser and
+the site with SSL/TLS, so passwords and personal data cannot be read or altered in
+transit, and the certificate proves the site really is www.foobar.com.
+
+What monitoring is used for: to know the health and performance of the
+infrastructure (uptime, CPU, memory, disk, response time, errors) and to get an
+alert before or when something breaks.
+
+How the monitoring tool collects data: an agent (the monitoring client) installed on
+each machine reads logs and system/application metrics and sends them to the
+monitoring service, which stores them, builds dashboards and triggers alerts.
+
+How to monitor the web server QPS: have the monitoring client collect Nginx's
+request data (the access log, or the stub_status module's request counter), send it
+to the monitoring service, and build a dashboard plus an alert on requests per
+second.
+
+Issues:
+- Terminating SSL at the load balancer: traffic between the load balancer and the
+  servers travels unencrypted inside the network, so anyone who gets into that
+  network can read it.
+- Only one MySQL server accepting writes: it is a SPOF for writes. If the Primary
+  fails, the application can no longer save data until someone fixes it or promotes
+  the Replica.
+- Servers with all the same components: database, web server and application server
+  compete for the same CPU and RAM, cannot be scaled separately, and a problem in one
+  component (for example the database filling the disk) takes down the others on the
+  same machine.
