@@ -1,0 +1,31 @@
+Diagram: https://raw.githubusercontent.com/atanih/holbertonschool-system_engineering-devops/main/web_infrastructure_design/images/0-simple_web_stack.png
+
+0. Simple web stack - www.foobar.com
+
+Flow: a user types www.foobar.com in the browser. DNS resolves the name to 8.8.8.8,
+the browser opens a TCP/IP connection to that server and sends an HTTP request.
+Nginx receives it, serves static files directly and forwards dynamic requests to the
+application server, which runs the code base and queries MySQL. The response goes
+back the same way to the user.
+
+Specifics:
+- Server: a physical or virtual machine that provides services (here: web, app and
+  database) to clients over the network.
+- Domain name: a human-readable alias (foobar.com) for the server's IP address, so
+  users do not need to remember 8.8.8.8.
+- DNS record for www in www.foobar.com: an A record, mapping www.foobar.com -> 8.8.8.8.
+- Web server (Nginx): handles HTTP requests, serves static content (HTML, CSS,
+  images) and passes dynamic requests to the application server.
+- Application server: runs the application code (business logic) and builds dynamic
+  responses.
+- Application files: the code base executed by the application server.
+- Database (MySQL): stores and retrieves the application's data.
+- Communication with the user's computer: TCP/IP, using HTTP (port 80).
+
+Issues:
+- SPOF: there is only one server. If it goes down, the whole site is down.
+- Downtime during maintenance: deploying new code or restarting the web server
+  makes the site unavailable for that time.
+- Cannot scale: one server has limited CPU, RAM and bandwidth. With too much
+  incoming traffic it slows down or crashes, and there is nowhere to send the
+  extra load.
