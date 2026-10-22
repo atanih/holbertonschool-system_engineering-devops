@@ -1,0 +1,41 @@
+Diagram: https://raw.githubusercontent.com/atanih/holbertonschool-system_engineering-devops/main/web_infrastructure_design/images/1-distributed_web_infrastructure.png
+
+1. Distributed web infrastructure - www.foobar.com
+
+Flow: DNS resolves www.foobar.com to the load balancer's IP. HAProxy receives every
+request and forwards it to one of the two servers. Each server runs Nginx, an
+application server and the code base. Writes go to the MySQL Primary on server 1;
+the Replica on server 2 receives a copy of every change.
+
+Why each additional element:
+- Load balancer (HAProxy): spreads traffic across servers, so no single server is
+  overloaded, and stops sending traffic to a server that is down.
+- Second server: adds capacity and redundancy; if one web/app server fails, the
+  other keeps serving.
+- Database Primary-Replica: keeps a copy of the data on a second machine and lets
+  reads be spread across both.
+
+Distribution algorithm: Round Robin. HAProxy sends each new request to the next
+server in the list in turn (server 1, server 2, server 1, ...), so load is shared
+evenly when servers have the same capacity.
+
+Active-Active vs Active-Passive: this setup is Active-Active, because both servers
+receive traffic at the same time. In Active-Passive, only one node serves traffic
+and the other stays on standby, taking over only if the active one fails.
+
+How a Primary-Replica (Master-Slave) cluster works: the Primary accepts all writes
+and records them in its binary log. The Replica reads that log and replays the same
+changes, so its data stays a copy of the Primary's (asynchronously, so it can lag a
+little).
+
+Primary vs Replica for the application: the application must send all writes
+(INSERT, UPDATE, DELETE) to the Primary. The Replica is read-only, so it can only
+serve reads (SELECT).
+
+Issues:
+- SPOF: the load balancer (only one) and the Primary database (if it fails, no more
+  writes are possible).
+- Security: no firewall, so every port is exposed; no HTTPS, so traffic travels
+  unencrypted and can be read or modified in transit.
+- No monitoring: nobody is alerted when a server fails, gets overloaded or runs out
+  of disk.
